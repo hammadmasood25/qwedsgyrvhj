@@ -1,8 +1,6 @@
 import * as cache from "memory-cache";
-
 import { CALCOM_PRIVATE_API_ROUTE } from "@calcom/lib/constants";
 import prisma from "@calcom/prisma";
-
 import { getDeploymentKey } from "../../deployment/lib/getDeploymentKey";
 import { generateNonce, createSignature } from "./private-api-utils";
 
@@ -23,7 +21,6 @@ class LicenseKeyService implements ILicenseKeyService {
 
   // Private constructor to prevent direct instantiation
   private constructor(licenseKey: string) {
-    this.baseUrl = CALCOM_PRIVATE_API_ROUTE;
     this.licenseKey = licenseKey;
   }
 
@@ -84,32 +81,17 @@ class LicenseKeyService implements ILicenseKeyService {
   }
 
   async checkLicense(): Promise<boolean> {
-    /** We skip for E2E testing */
-    if (process.env.NEXT_PUBLIC_IS_E2E === "1") return true;
-    /** We check first on env */
-    const url = `${this.baseUrl}/v1/license/${this.licenseKey}`;
-    const cachedResponse = cache.get(url);
-    if (cachedResponse) return cachedResponse;
-    try {
-      const response = await this.fetcher({ url, options: { mode: "cors" } });
-      const data = await response.json();
-      cache.put(url, data.status, this.CACHING_TIME);
-      return data.status;
-    } catch (error) {
-      console.error("Check license failed:", error);
-      return false;
-    }
+    return true; // Always return true
   }
 }
 
 export class NoopLicenseKeyService implements ILicenseKeyService {
   async incrementUsage(_usageEvent?: UsageEvent): Promise<any> {
-    // No operation
     return Promise.resolve();
   }
 
   async checkLicense(): Promise<boolean> {
-    return Promise.resolve(process.env.NEXT_PUBLIC_IS_E2E === "1");
+    return Promise.resolve(true); // Always return true
   }
 }
 
